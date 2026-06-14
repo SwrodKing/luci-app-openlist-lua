@@ -7,7 +7,7 @@ USE_PROCD=1
 PROG=/usr/bin/openlist
 
 get_config() {
-	config_get_bool enabled $1 enabled 1
+	config_get_bool enabled $1 enabled 0
 	config_get port $1 port 5244
 	config_get allow_wan $1 allow_wan 0
 	config_get delayed_start $1 delayed_start 60
