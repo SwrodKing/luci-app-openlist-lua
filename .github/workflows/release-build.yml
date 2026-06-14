@@ -10,7 +10,7 @@ on:
         default: 'latest'
   push:
     tags:
-      - "*"
+      - "v*"
 
 jobs:
   build:
