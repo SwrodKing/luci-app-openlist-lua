@@ -1,0 +1,184 @@
+name: Cleanup Old Workflow Runs
+
+on:
+  workflow_dispatch:
+    inputs:
+      keep_count:
+        description: 'Number of recent workflow runs to keep'
+        required: false
+        default: '7'
+        type: string
+      workflow_name:
+        description: 'Workflow to cleanup (leave empty for all workflows)'
+        required: false
+        default: ''
+        type: string
+  schedule:
+    # 每周一 00:00 UTC 自动清理
+    - cron: '0 0 * * 1'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: Cleanup Old Workflow Runs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get workflow information
+        id: workflow_info
+        run: |
+          if [ -n "${{ github.event.inputs.workflow_name }}" ]; then
+            WORKFLOW_NAME="${{ github.event.inputs.workflow_name }}"
+            echo "🔍 Targeting specific workflow: $WORKFLOW_NAME"
+          else
+            WORKFLOW_NAME="*"
+            echo "🔍 Targeting all workflows"
+          fi
+          
+          KEEP_COUNT="${{ github.event.inputs.keep_count }}"
+          if [ -z "$KEEP_COUNT" ]; then
+            KEEP_COUNT=7
+          fi
+          
+          echo "workflow_name=$WORKFLOW_NAME" >> $GITHUB_OUTPUT
+          echo "keep_count=$KEEP_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Cleanup workflows
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WORKFLOW_NAME: ${{ steps.workflow_info.outputs.workflow_name }}
+          KEEP_COUNT: ${{ steps.workflow_info.outputs.keep_count }}
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+          
+          echo "📊 Repository: $OWNER/$REPO"
+          echo "📌 Keep count: $KEEP_COUNT"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # 如果指定了具体的 workflow，则清理该 workflow
+          # 否则清理所有 workflow
+          if [ "$WORKFLOW_NAME" != "*" ]; then
+            echo "🔍 Fetching workflow runs for: $WORKFLOW_NAME"
+            
+            # 获取 workflow 列表找到对应的 workflow ID
+            WORKFLOWS=$(gh api repos/$OWNER/$REPO/actions/workflows \
+              --jq ".workflows[] | select(.name == \"$WORKFLOW_NAME\") | .id" \
+              2>/dev/null)
+            
+            if [ -z "$WORKFLOWS" ]; then
+              echo "❌ Workflow '$WORKFLOW_NAME' not found"
+              echo "Available workflows:"
+              gh api repos/$OWNER/$REPO/actions/workflows \
+                --jq '.workflows[] | "\(.name) (ID: \(.id))"' \
+                2>/dev/null || echo "Unable to list workflows"
+              exit 1
+            fi
+          else
+            echo "🔍 Fetching all workflow IDs..."
+            WORKFLOWS=$(gh api repos/$OWNER/$REPO/actions/workflows \
+              --jq '.workflows[].id' \
+              2>/dev/null)
+          fi
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          TOTAL_DELETED=0
+          TOTAL_KEPT=0
+          
+          # 对每个 workflow 进行清理
+          for WORKFLOW_ID in $WORKFLOWS; do
+            WORKFLOW_NAME_ACTUAL=$(gh api repos/$OWNER/$REPO/actions/workflows/$WORKFLOW_ID \
+              --jq '.name' 2>/dev/null)
+            
+            echo ""
+            echo "📋 Processing workflow: $WORKFLOW_NAME_ACTUAL (ID: $WORKFLOW_ID)"
+            
+            # 获取所有已完成的 runs，按创建时间倒序
+            RUNS=$(gh api repos/$OWNER/$REPO/actions/workflows/$WORKFLOW_ID/runs \
+              --paginate \
+              --jq '.runs[] | select(.status=="completed") | .id' \
+              2>/dev/null | head -n 100)
+            
+            RUN_ARRAY=($RUNS)
+            TOTAL_RUNS=${#RUN_ARRAY[@]}
+            
+            echo "   Total completed runs: $TOTAL_RUNS"
+            echo "   Keeping: $KEEP_COUNT runs"
+            echo "   Will delete: $(( $TOTAL_RUNS > $KEEP_COUNT ? $TOTAL_RUNS - $KEEP_COUNT : 0 )) runs"
+            
+            # 删除超过保留数量的 runs
+            if [ $TOTAL_RUNS -gt $KEEP_COUNT ]; then
+              for ((i = $KEEP_COUNT; i < $TOTAL_RUNS; i++)); do
+                RUN_ID=${RUN_ARRAY[$i]}
+                RUN_NUMBER=$(gh api repos/$OWNER/$REPO/actions/runs/$RUN_ID \
+                  --jq '.run_number' 2>/dev/null)
+                
+                echo "   🗑️  Deleting run #$RUN_NUMBER (ID: $RUN_ID)..."
+                
+                if gh api repos/$OWNER/$REPO/actions/runs/$RUN_ID -X DELETE 2>/dev/null; then
+                  echo "      ✅ Deleted successfully"
+                  TOTAL_DELETED=$((TOTAL_DELETED + 1))
+                else
+                  echo "      ❌ Failed to delete"
+                fi
+                
+                sleep 0.5
+              done
+            else
+              echo "   ℹ️  No runs to delete (total <= keep count)"
+            fi
+            
+            TOTAL_KEPT=$((TOTAL_KEPT + KEEP_COUNT))
+          done
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Cleanup completed!"
+          echo "   📊 Total deleted: $TOTAL_DELETED runs"
+          echo "   📊 Total kept: $TOTAL_KEPT runs"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Generate summary
+        run: |
+          cat > summary.txt << 'EOF'
+          # 🧹 Workflow Cleanup Complete
+          
+          ## Summary
+          - **Repository**: ${{ github.repository }}
+          - **Keep Count**: ${{ steps.workflow_info.outputs.keep_count }}
+          - **Workflow Filter**: ${{ steps.workflow_info.outputs.workflow_name || 'All workflows' }}
+          - **Triggered By**: ${{ github.event_name }}
+          
+          ## Details
+          - ✅ Old workflow runs have been deleted
+          - 📌 Latest runs have been preserved
+          - 🔄 Next cleanup: Scheduled weekly on Monday at 00:00 UTC (unless manual trigger)
+          
+          ## View Results
+          Check the **Actions** tab in the repository to see the updated workflow runs.
+          EOF
+          
+          cat summary.txt
+
+      - name: Create job summary
+        if: always()
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          # 🧹 Workflow Cleanup Results
+          
+          ## Configuration
+          - **Keep Count**: ${{ steps.workflow_info.outputs.keep_count }} runs
+          - **Workflow**: ${{ steps.workflow_info.outputs.workflow_name || 'All workflows' }}
+          - **Repository**: ${{ github.repository }}
+          
+          ## Status
+          ✅ Cleanup process completed successfully!
+          
+          ### Next Steps
+          - View the Actions tab to confirm the cleanup
+          - Adjust `keep_count` parameter if needed
+          - Next automatic cleanup: Monday 00:00 UTC
+          EOF
