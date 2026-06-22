@@ -6,4 +6,5 @@ For devices running JS LuCI, use the [main](https://github.com/sbwml/luci-app-op
 
 
 
-![](.\previews\SnowShot_2026-06-23_00-35-39.png)
+## 截图
+![](./previews/SnowShot_2026-06-23_00-35-39.png)
