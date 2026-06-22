@@ -50,7 +50,7 @@ function admin_info()
 end
 
 function cancel_otp()
-    luci.sys.exec("/usr/bin/openlist --data $(uci -q get openlist.@openlist[0].data_dir) admin cancel2fa >/dev/null 2>&1")
+    luci.sys.exec("/usr/bin/openlist --data $(uci -q get openlist.@openlist[0].data_dir) cancel2fa 2>&1")
     
     luci.http.prepare_content("application/json")
     luci.http.write_json({success = true})

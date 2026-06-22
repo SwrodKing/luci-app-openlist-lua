@@ -6,7 +6,7 @@
 		btn.value = '<%:Collecting data...%>';
 		XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openlist", "admin_info")%>',
 			null,
-			function(x,rv)
+			function(x, rv)
 			{
 				var tb = document.getElementById('<%=self.option%>-status');
 				if (tb)
@@ -16,26 +16,6 @@
 				}
 			btn.disabled = false;
 			btn.value = '<%:Reset%>';
-			}
-		);
-		return false;
-	}
-
-	function cancel_otp(btn)
-	{
-		btn.disabled = true;
-		btn.value = '<%:Collecting data...%>';
-		XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openlist", "cancel_otp")%>',
-			null,
-			function(x, rv)
-			{
-				var tb = document.getElementById('<%=self.option%>-status');
-				if (tb)
-				{
-					tb.innerHTML = "<font color='red'>" + "<%:Cancel OTP Success%>" + "</font>";
-				}
-			btn.disabled = false;
-			btn.value = '<%:Cancel OTP%>';
 			}
 		);
 		return false;

@@ -1,0 +1,25 @@
+<%+cbi/valueheader%>
+<script type="text/javascript">//<![CDATA[
+	function cancel_otp(btn)
+	{
+		btn.disabled = true;
+		btn.value = '<%:Collecting data...%>';
+		XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openlist", "cancel_otp")%>',
+			null,
+			function(x, rv)
+			{
+				var tb = document.getElementById('<%=self.option%>-status');
+				if (tb)
+				{
+					tb.innerHTML = "<font color='red'>" + "<%:Cancel OTP Success%>" + "</font>";
+				}
+			btn.disabled = false;
+			btn.value = '<%:Cancel OTP%>';
+			}
+		);
+		return false;
+	}
+//]]></script>
+<input type="button" class="btn cbi-button cbi-button-apply" value="<%:Reset%>" onclick="return cancel_otp(this)" />
+<span id="<%=self.option%>-status"><em><%=self.value%></em></span>
+<%+cbi/valuefooter%>

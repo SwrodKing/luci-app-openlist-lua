@@ -110,4 +110,8 @@ o = s:option(Button, "admin_info", translate("Reset Password"))
 o.rawhtml = true
 o.template = "openlist/admin_info"
 
+o = s:option(Button, "cancel_otp", translate("Cancel OTP"))
+o.rawhtml = true
+o.template = "openlist/cancel_otp"
+
 return m
