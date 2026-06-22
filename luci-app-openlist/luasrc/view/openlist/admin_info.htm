@@ -8,18 +8,19 @@
 			null,
 			function(x,rv)
 			{
-			var tb = document.getElementById('<%=self.option%>-status');
-			if (tb)
-			{
-				tb.innerHTML = "<%:Username:%>" + "<font color='green'>" + rv.username + "</font>";
-				tb.innerHTML += "<%:Password:%>" + "<font color='green'>" + rv.password + "</font>";
-			}
-				btn.disabled = false;
-				btn.value = '<%:Reset%>';
+				var tb = document.getElementById('<%=self.option%>-status');
+				if (tb)
+				{
+					tb.innerHTML = "<%:Username:%>" + "<font color='green'>" + rv.username + "</font>";
+					tb.innerHTML += "<%:Password:%>" + "<font color='green'>" + rv.password + "</font>";
+				}
+			btn.disabled = false;
+			btn.value = '<%:Reset%>';
 			}
 		);
 		return false;
 	}
+
 	function cancel_otp(btn)
 	{
 		btn.disabled = true;
@@ -28,13 +29,13 @@
 			null,
 			function(x, rv)
 			{
-			var tb = document.getElementById('<%=self.option%>-status');
-			if (tb)
-			{
-				tb.innerHTML = "<font color='red'>" + "<%:Cancel OTP Success%>" + "</font>";
-			}
-				btn.disabled = false;
-				btn.value = '<%:Cancel OTP%>';
+				var tb = document.getElementById('<%=self.option%>-status');
+				if (tb)
+				{
+					tb.innerHTML = "<font color='red'>" + "<%:Cancel OTP Success%>" + "</font>";
+				}
+			btn.disabled = false;
+			btn.value = '<%:Cancel OTP%>';
 			}
 		);
 		return false;
