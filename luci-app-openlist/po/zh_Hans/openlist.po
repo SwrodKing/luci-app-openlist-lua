@@ -64,6 +64,12 @@ msgstr "重置密码"
 msgid "Reset"
 msgstr "重置"
 
+msgid "Cancel OTP"
+msgstr "取消OTP验证"
+
+msgid "Cancel OTP Success"
+msgstr "成功取消OTP验证"
+
 msgid "Username:"
 msgstr "用户名："
 

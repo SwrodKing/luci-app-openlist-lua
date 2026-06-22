@@ -15,6 +15,7 @@ function index()
 	entry({"admin", "services", "openlist", "get_log"}, call("get_log")).leaf = true
 	entry({"admin", "services", "openlist", "clear_log"}, call("clear_log")).leaf = true
 	entry({"admin", "services", "openlist", "admin_info"}, call("admin_info")).leaf = true
+	entry({"admin", "services", "openlist", "cancel_otp"}, call("cancel_otp")).leaf = true
 end
 
 function openlist_status()
@@ -46,4 +47,11 @@ function admin_info()
 
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({username = username, password = password})
+end
+
+function cancel_otp()
+    luci.sys.exec("/usr/bin/openlist --data $(uci -q get openlist.@openlist[0].data_dir) admin cancel2fa >/dev/null 2>&1")
+    
+    luci.http.prepare_content("application/json")
+    luci.http.write_json({success = true})
 end
