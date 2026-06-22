@@ -64,9 +64,10 @@ jobs:
           fetch-depth: 0
 
       # 先安装UPX依赖（SDK可能未预装）
-      # - name: Install UPX (if needed)
-        # run: |
-          # sudo apt update && sudo apt install -y upx-ucl
+      - name: Install UPX
+        uses: crazy-max/ghaction-upx@v4
+        with:
+          install-only: true
 
       - name: Build with Static Linking
         run: |
