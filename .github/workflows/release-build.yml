@@ -74,13 +74,8 @@ jobs:
           sed -i '/golang-package/a \\tGO_PKG_DEFAULT_LDFLAGS:=-w -s -extldflags "-static"' openlist/Makefile
 
       - name: UPX Compress
-        # if: ${{ matrix.arch != 'loongarch64_generic' && matrix.arch != 'mips64_mips64r2' && matrix.arch != 'mips64_octeonplus' && matrix.arch != 'mips64el_mips64r2' && matrix.arch != 'riscv64_riscv64' }}
-        if: >-
-          matrix.arch != 'loongarch64_generic' &&
-          matrix.arch != 'mips64_mips64r2' &&
-          matrix.arch != 'mips64_octeonplus' &&
-          matrix.arch != 'mips64el_mips64r2' &&
-          matrix.arch != 'riscv64_riscv64'
+        if: ${{ matrix.arch != 'loongarch64_generic' && matrix.arch != 'mips64_mips64r2' && matrix.arch != 'mips64_octeonplus' && matrix.arch != 'mips64el_mips64r2' && matrix.arch != 'riscv64_riscv64' }}
+
         # run: |
           # sed -i '/openlist.init/a \\t/usr/bin/upx --lzma --best $(1)\/usr\/bin\/openlist' openlist/Makefile
          run: |
